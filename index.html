@@ -7,11 +7,19 @@
 
 <div style="display: grid; grid-template-rows: auto auto; gap: 10px; width: 1000px; margin-left: auto; margin-right: auto" >
 
-<textarea id='dot-source' style="height: 300px" >
-    digraph  {a -> b}
+<textarea id='dot-source' style="height: 300px">digraph  {
+
+a [label="overall task"]
+b [label="completed task", style=filled, fillcolor=lightgreen]
+c [label="incomplete task"]
+
+a -> b
+a -> c
+
+}
 </textarea>
 
-<div id="graph" style="text-align: center;"></div>
+<div id="graph" style="text-align: center; width:1000px; height: 500px; border: 1px dashed gray"></div>
 
 </div>
 
@@ -23,6 +31,7 @@ source = document.getElementById('dot-source')
 
 let graph = d3.select("#graph")
         .graphviz()
+        .zoom(false)
         .transition(() => 
             d3.transition("main")
             .ease(d3.easeLinear)
