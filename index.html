@@ -7,16 +7,14 @@
 
 <div style="display: grid; grid-template-rows: auto auto; gap: 10px; width: 1000px; margin-left: auto; margin-right: auto" >
 
-<textarea id='dot-source' style="height: 300px">digraph  {
+<textarea id='dot-source' style="height: 300px">
+- [ ] overall task
+  - [x] completed task
+  - [ ] incomplete task
+    - [x] incomplete task part 1
+    - [ ] incomplete task part 2
+    - [ ] incomplete task part 3
 
-a [label="overall task"]
-b [label="completed task", style=filled, fillcolor=lightgreen]
-c [label="incomplete task"]
-
-a -> b
-a -> c
-
-}
 </textarea>
 
 <div id="graph" style="text-align: center; width:1000px; height: 500px; border: 1px dashed gray"></div>
@@ -37,8 +35,91 @@ let graph = d3.select("#graph")
             .ease(d3.easeLinear)
             .duration(100)
         )
-        .renderDot(source.value);
+        .renderDot(convertToDot(parseChecklist(source.value)));
 
-source.addEventListener('input', () => graph.renderDot(source.value));
+source.addEventListener('input', () => {
+    const parsed = parseChecklist(source.value)
+    console.log(parsed);
+    graph.renderDot(convertToDot(parsed));
+});
+
+function parseChecklist(checklistText) {
+    const lines = checklistText.split(/[\r\n]+/g)
+    let indents = [{indent: 0, parent: null}]
+    const tasks = []
+    const connections = []
+    let counter = 1;
+    let previousId = null;
+
+    for (let line of lines) {
+        if (line.trim() == '') {
+            continue;
+        }
+
+        const indent = line.search(/\S|$/)
+        let text = line.trim();
+        let todo = false;
+        let completed = false;
+        if (text.startsWith('- [ ]')) {
+            todo = true;
+            text = text.substr(5).trim();
+        } else if (text.startsWith('- [x]')) {
+            todo = completed = true;
+            text = text.substr(5).trim();
+        } else if (text.startsWith('-')) {
+            text = text.substr(1).trim()
+        }
+        const id = `node_${counter++}`
+        tasks.push({ id, text, todo, completed, indent })
+
+        const lastIdent = indents[indents.length - 1]
+        if (indent === lastIdent.indent) {
+            if (lastIdent.parent) {
+                connections.push({from: lastIdent.parent, to: id })
+            }
+        }
+        if (indent > lastIdent.indent) {
+            indents.push({indent, parent: previousId});
+            if (previousId) {
+                connections.push({from: previousId, to: id})
+            }
+        }
+        if (indent < lastIdent.indent) {
+            indents = indents.filter(i => i.indent <= indent);
+            const lastIdent = indents[indents.length - 1]
+            if (lastIdent.parent) {
+                connections.push({from: lastIdent.parent, to: id })
+            }
+        }
+
+        previousId = id
+    }
+
+    return { tasks, connections };
+}
+
+function convertToDot(parsed) {
+    const result = `
+
+    digraph  {
+
+${
+    parsed.tasks
+        .map(p => `${p.id} [label="${p.text}" ${p.completed ? ', style=filled, fillcolor=lightgreen' : ''}]`)
+        .join('\n')
+}
+
+${
+    parsed.connections
+        .map(c => `${c.from} -> ${c.to}`)
+        .join('\n')
+}
+
+}
+    `
+
+    console.log(result);
+    return result;
+}
 
 </script>
