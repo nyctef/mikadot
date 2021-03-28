@@ -5,9 +5,9 @@
 <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
 <script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
 
-<div style="display: grid; grid-template-rows: auto auto auto; gap: 10px; width: 1000px; margin-left: auto; margin-right: auto" >
+<div style="display: grid; grid-template-rows: 300px 500px auto; gap: 10px; width: 1000px; margin-left: auto; margin-right: auto" >
 
-<textarea id='dot-source' style="height: 300px">
+<textarea id='dot-source'>
 - [ ] overall task
   - [x] completed task
   - [ ] incomplete task
@@ -17,20 +17,31 @@
     - [ ] incomplete task part 3
 </textarea>
 
-<div id="graph" style="text-align: center; width:1000px; height: 500px; border: 1px dashed gray"></div>
+<div id="graph"></div>
 
 <a href='https://github.com/nyctef/mikadot'>view source on github</a>
 </div>
 
 
 
-
+<div id="notification">
+This is a notification!
+</div>
 <script>
+
+const notification = document.getElementById('notification');
+const clearNotification = makeDebounce(3000, () => notification.classList.remove('visible'));
+const setNotification = (message) => {
+    notification.innerText = message;
+    notification.classList.add('visible');
+    clearNotification();
+}
 
 const source = document.getElementById('dot-source')
 
 const graph = d3.select("#graph")
         .graphviz()
+        .onerror(setNotification)
         .width(1000)
         .height(500)
         .fit(true)
@@ -128,4 +139,39 @@ ${
     return result;
 }
 
+function makeDebounce(delay, func) {
+    let timerId;
+
+    return function() {
+        clearTimeout(timerId);
+        timerId = setTimeout(func, delay);
+    }
+}
+
 </script>
+<style>
+
+#notification {
+    opacity: 0;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+
+    border: 1px solid black;
+    padding: 10px;
+
+    transition: opacity 1s;
+}
+
+#notification.visible {
+    opacity: 1;
+    transition: opacity 200ms;
+}
+
+#graph {
+    text-align: center;
+
+    border: 1px dashed gray
+}
+
+</style>
