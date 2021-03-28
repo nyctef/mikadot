@@ -8,12 +8,13 @@
 <div style="display: grid; grid-template-rows: 300px 500px auto; gap: 10px; width: 1000px; margin-left: auto; margin-right: auto" >
 
 <textarea id='dot-source'>
-- [ ] overall task
-  - [x] completed task
-  - [ ] incomplete task
+- [ ] Write your main goal here
+  - [x] Completed tasks are highlighted
+  - [ ] This still needs fixing
     - [x] incomplete task part 1
-    - [ ] incomplete task part 2
+    - [ ] Try editing the text above!
       - [ ] Use a newline (\\n) \n character to wrap text
+      - [ ] Labels can contain quotes \n and other "special" characters 😊
     - [ ] incomplete task part 3
 </textarea>
 
@@ -69,10 +70,14 @@ function parseChecklist(checklistText) {
 
     for (let line of lines) {
         if (line.trim() == '') {
+            // skip empty lines
             continue;
         }
 
+        // the indentation level is the index of the first non-whitespace character
         const indent = line.search(/\S|$/)
+
+        // parse github-style checklists to determine node styling
         let text = line.trim();
         let todo = false;
         let completed = false;
@@ -85,21 +90,35 @@ function parseChecklist(checklistText) {
         } else if (text.startsWith('-')) {
             text = text.substr(1).trim()
         }
+
+        // escape quotes so they don't break dot labels
+        // we also escape `\`s, unless they are followed by `n` or `\`
+        // this means that the user can use \n to insert their own newlines
+        text = text.replace(/"|\\(?![n\\])/g, (match) => `\\${match}`);
+
+        // give the task a unique id, then save it for later
         const id = `node_${counter++}`
         tasks.push({ id, text, todo, completed, indent })
 
         const lastIdent = indents[indents.length - 1]
+        // if we have the same indent as the previous line, then we attach
+        // to whatever parent the previous line had
         if (indent === lastIdent.indent) {
             if (lastIdent.parent) {
                 connections.push({from: lastIdent.parent, to: id })
             }
         }
+        // if we are more indented than the previous line, then push a new
+        // indent record on the stack with the previous line as the parent
         if (indent > lastIdent.indent) {
             indents.push({indent, parent: previousId});
             if (previousId) {
                 connections.push({from: previousId, to: id})
             }
         }
+        // if we are less indented than the previous line, then forget about
+        // any indents that are no longer relevant, and look for a parent
+        // indent again
         if (indent < lastIdent.indent) {
             indents = indents.filter(i => i.indent <= indent);
             const lastIdent = indents[indents.length - 1]
