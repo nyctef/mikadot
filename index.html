@@ -71,11 +71,11 @@ const graph = d3.select("#graph")
         )
         .renderDot(convertToDot(parseChecklist(source.value)));
 
-source.addEventListener('input', () => {
+source.addEventListener('input', makeDebounce(100, () => {
     const parsed = parseChecklist(source.value)
     console.log(parsed);
     graph.renderDot(convertToDot(parsed));
-});
+}));
 
 /** @param {string} checklistText */
 function parseChecklist(checklistText) {
@@ -114,8 +114,8 @@ function parseChecklist(checklistText) {
         // this means that the user can use \n to insert their own newlines
         text = text.replace(/"|\\(?![n\\])/g, (match) => `\\${match}`);
 
-        // give the task a unique id, then save it for later
-        const id = `node_${counter++}`
+        // give the task a (hopefully) unique id, then save it for later
+        const id = `node_${cyrb53(text)}`
         tasks.push({ id, text, todo, completed, indent })
 
         const lastIdent = indents[indents.length - 1]
@@ -204,6 +204,19 @@ function makeDebounce(delay, func) {
         timerId = setTimeout(func, delay);
     }
 }
+
+function cyrb53(str, seed = 0) {
+    // taken from https://stackoverflow.com/a/52171480 - in public domain
+    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+    for (let i = 0, ch; i < str.length; i++) {
+        ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+    return 4294967296 * (2097151 & h2) + (h1>>>0);
+};
 
 </script>
 <style>
