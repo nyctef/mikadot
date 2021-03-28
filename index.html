@@ -20,7 +20,8 @@
 
 <div id="graph"></div>
 
-<a href='https://github.com/nyctef/mikadot'>view source on github</a>
+<a href='https://github.com/nyctef/mikadot'>view source on github.</a> 
+<a href='#' onclick="copyLinkToClipboard(); event.preventDefault();">Copy link to clipboard.</a> 
 </div>
 
 
@@ -28,6 +29,7 @@
 <div id="notification">
 This is a notification!
 </div>
+
 <script>
 
 const notification = document.getElementById('notification');
@@ -39,6 +41,11 @@ const setNotification = (message) => {
 }
 
 const source = document.getElementById('dot-source')
+
+const params = new URLSearchParams(window.location.search);
+if (params.has("t")) {
+    source.value = params.get("t")
+}
 
 const graph = d3.select("#graph")
         .graphviz()
@@ -156,6 +163,26 @@ ${
 
     console.log(result);
     return result;
+}
+
+function copyLinkToClipboard() {
+    // based on https://stackoverflow.com/a/33928558
+    const link = new URL(`?t=${encodeURIComponent(source.value)}`, window.location.href);
+    console.log("Copying link: " + link.toString());
+    var textarea = document.createElement("textarea");
+    textarea.value = link.toString();
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand('copy');
+        setNotification("Link copied to clipboard!");
+    }
+    catch (ex) {
+        setNotification("Failed to copy link: " + ex);
+    }
+    finally {
+        document.body.removeChild(textarea);
+    }
 }
 
 function makeDebounce(delay, func) {
