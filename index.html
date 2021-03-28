@@ -5,9 +5,20 @@
 <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
 <script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
 
-<div style="display: grid; grid-template-rows: 300px 500px auto; gap: 10px; width: 1000px; margin-left: auto; margin-right: auto" >
+<div style="
+    display: grid;
+    grid-template-rows: 300px 500px auto;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+        'source source source'
+        'graph graph graph'
+        'viewsource . copylink';
+    gap: 10px;
+    width: 1000px;
+    margin-left: auto;
+    margin-right: auto" >
 
-<textarea id='dot-source'>
+<textarea id='dot-source' style="grid-area: source;">
 - [ ] Write your main goal here
   - [x] Completed tasks are highlighted
   - [ ] This still needs fixing
@@ -18,10 +29,10 @@
     - [ ] incomplete task part 3
 </textarea>
 
-<div id="graph"></div>
+<div id="graph" style="grid-area: graph;"></div>
 
-<a href='https://github.com/nyctef/mikadot'>view source on github.</a> 
-<a href='#' onclick="copyLinkToClipboard(); event.preventDefault();">Copy link to clipboard.</a> 
+<a href='https://github.com/nyctef/mikadot' style="grid-area: viewsource;">view source on github</a>
+<a href='#' onclick="copyLinkToClipboard(); event.preventDefault();" style="grid-area: copylink;">copy link to clipboard</a>
 </div>
 
 
