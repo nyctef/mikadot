@@ -80,7 +80,7 @@ source.addEventListener('input', () => {
 /** @param {string} checklistText */
 function parseChecklist(checklistText) {
     const lines = checklistText.split(/[\r\n]+/g)
-    let indents = [{indent: 0, parent: null}]
+    let indents = [{indent: 0, parent: null, current: null}]
     const tasks = []
     const connections = []
     let counter = 1;
@@ -114,37 +114,46 @@ function parseChecklist(checklistText) {
         // this means that the user can use \n to insert their own newlines
         text = text.replace(/"|\\(?![n\\])/g, (match) => `\\${match}`);
 
-        // give the task a unique id, then save it for later
-        const id = `node_${counter++}`
-        tasks.push({ id, text, todo, completed, indent })
+        let id = [0];
+        const idToString = (id) => `node_${id.join('_')}`
 
-        const lastIdent = indents[indents.length - 1]
+        const lastIndent = indents[indents.length - 1]
         // if we have the same indent as the previous line, then we attach
         // to whatever parent the previous line had
-        if (indent === lastIdent.indent) {
-            if (lastIdent.parent) {
-                connections.push({from: lastIdent.parent, to: id })
+        if (indent === lastIndent.indent) {
+            if (previousId) {
+                id = previousId.slice();
+                id[id.length - 1]++;
+                lastIndent.current = id;
+            }
+            if (lastIndent.parent) {
+                connections.push({from: idToString(lastIndent.parent), to: idToString(id) })
             }
         }
         // if we are more indented than the previous line, then push a new
         // indent record on the stack with the previous line as the parent
-        if (indent > lastIdent.indent) {
-            indents.push({indent, parent: previousId});
+        if (indent > lastIndent.indent) {
+            indents.push({indent, parent: previousId });
             if (previousId) {
-                connections.push({from: previousId, to: id})
+                id = [...previousId, 0];
+                indents[indents.length - 1].current = id;
+                connections.push({from: idToString(previousId), to: idToString(id)})
             }
         }
         // if we are less indented than the previous line, then forget about
         // any indents that are no longer relevant, and look for a parent
         // indent again
-        if (indent < lastIdent.indent) {
+        if (indent < lastIndent.indent) {
             indents = indents.filter(i => i.indent <= indent);
-            const lastIdent = indents[indents.length - 1]
-            if (lastIdent.parent) {
-                connections.push({from: lastIdent.parent, to: id })
+            const lastIndent = indents[indents.length - 1]
+            if (lastIndent.current) {
+                id = lastIndent.current.slice();
+                id[id.length - 1]++;
+                connections.push({from: idToString(lastIndent.parent), to: idToString(id) })
             }
         }
 
+        tasks.push({ id: idToString(id), text, todo, completed, indent })
         previousId = id
     }
 
