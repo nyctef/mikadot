@@ -27,9 +27,9 @@
 
 <script>
 
-source = document.getElementById('dot-source')
+const source = document.getElementById('dot-source')
 
-let graph = d3.select("#graph")
+const graph = d3.select("#graph")
         .graphviz()
         .width(1000)
         .height(500)
@@ -47,6 +47,7 @@ source.addEventListener('input', () => {
     graph.renderDot(convertToDot(parsed));
 });
 
+/** @param {string} checklistText */
 function parseChecklist(checklistText) {
     const lines = checklistText.split(/[\r\n]+/g)
     let indents = [{indent: 0, parent: null}]
@@ -102,6 +103,7 @@ function parseChecklist(checklistText) {
     return { tasks, connections };
 }
 
+/** @param {ReturnType<typeof parseChecklist>} parsed */
 function convertToDot(parsed) {
     const result = `
 
